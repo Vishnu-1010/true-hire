@@ -1,13 +1,26 @@
 const express = require("express");
 const app = express();
-const port = 3000;
+const port = process.env.PORT;
 const path = require("path");
-const homeRoute = require('./routes/homeRoute');
+require('dotenv').config();
+
+const userRoutes = require("./routes/userRoutes");
+const connectDB = require('./config/mongodb');
+connectDB();
+
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
-app.use("/",homeRoute);
+
+app.use("/", userRoutes);
+
+//page not found handler
+app.use((req, res) => {
+  res.status(404).render('pageNotFound')
+});
+
 app.listen(port, () => {
   console.log(`port is listening ${port}`);
 });
