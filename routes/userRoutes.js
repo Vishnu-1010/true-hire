@@ -1,14 +1,22 @@
-const express = require("express");
-const { homePage, loginPage, signupPage,userSignup } = require("../controllers/userData");
+import express from "express";
+import {
+  homePage,
+  loginPage,
+  signupPage,
+  userSignup,
+  userLogin,
+  profilePage,
+} from "../controllers/userData.js";
+import { userVerify } from "../middleware/userVerify.js";
 const router = express.Router();
 
 //homepage
 router.get("/", homePage);
 //login page
-router.get("/login", loginPage);
+router.post("/login", loginPage);
 //signup page
-router.get("/signup", signupPage);
-//page not found
-router.post("/signup",userSignup);
+router.post("/signup", signupPage);
 
-module.exports = router;
+
+router.get("/profile", userVerify, profilePage);
+export default router;
