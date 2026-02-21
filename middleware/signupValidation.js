@@ -9,7 +9,7 @@ const validateSignUp = (req,res,next)=>{
     }
     if(password.length()<6){
         return res.json({
-            status:400,
+            status:false,
             message:"password length must be greater than 8"
         });
     }
