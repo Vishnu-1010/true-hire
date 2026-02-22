@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 import userRoutes from "./routes/userRoutes.js";
 import connectDB from "./config/mongodb.js";
-import { homePage,loginPage,signupPage } from "./controllers/userData.js";
+import { homePage, userLogin, userSignup } from "./controllers/userData.js";
 
 const app = express();
 const port = process.env.PORT;
@@ -22,10 +22,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 //setting cookie-parser
 app.use(cookieParser());
-app.use("/login",loginPage);
-app.use("/signup",signupPage);
+
+// to parse all middle ware to routes
+app.use(userRoutes);
+
+
+app.use("/login", userLogin);
+app.use("/signup", userSignup);
 //default handler
-app.use("/",homePage);
+app.use("/", homePage);
 
 //page not found handler
 app.use((req, res) => {
