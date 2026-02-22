@@ -1,22 +1,21 @@
 import express from "express";
 import {
-  homePage,
-  loginPage,
-  signupPage,
   userSignup,
   userLogin,
-  profilePage,
+  userProfile,
+  homePage,
 } from "../controllers/userData.js";
+import { validateSignUp } from "../middleware/signupValidation.js";
 import { userVerify } from "../middleware/userVerify.js";
+import { LoginValidation } from "../middleware/LoginValidation.js";
 const router = express.Router();
 
 //homepage
 router.get("/", homePage);
 //login page
-router.post("/login", loginPage);
+router.post("/login", LoginValidation, userLogin);
 //signup page
-router.post("/signup", signupPage);
+router.post("/signup", validateSignUp, userSignup);
 
-
-router.get("/profile", userVerify, profilePage);
+router.get("/profile", userVerify, userProfile);
 export default router;
