@@ -1,79 +1,108 @@
-
-import userSchema from "../models/signup.js";
+import User from "../models/signup.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+// home
 const homePage = (req, res) => {
   res.send("home");
 };
-const loginPage = (req, res) => {
-  res.send("login");
-};
-const signupPage = async(req, res) => {
 
-  try{
-    let {fullName,email,password,role }= req.body;
-    console.log(fullName,email,password,role);
- if (!fullName || !email || !password) {
-    return res.status(400).json({
-      message: "Name, email and password are required"
+//signup
+const userSignup = async (req, res) => {
+  try {
+    let { fullName, email, password, role } = req.body;
+    const emailExist = await User.findOne({
+      email: email.trim().toLowerCase(),
+    });
+    if (emailExist) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "Email already registered. Please use a different email or login.",
+      });
+    }
+    const user = new User({
+      fullName,
+      email,
+      password,
+      role,
+    });
+    await user.save();
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+    );
+
+    res.cookie("Token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
+    });
+
+    return res.status(201).redirect("/profile");
+  } catch (err) {
+    console.log("signup page error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
-  }catch(err){
-    console.log("signup page error");
-    res.status(500).send("Internal server error");
-  }
-}
+};
+//login
 
-
-// res.send(fullName, email, password, role);
-// };
-const profilePage =(req,res) =>{
+const userProfile = (req, res) => {
   res.send("profile");
-}
+};
 const userLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log(email);
-    console.log(password);
-    const userEmail = await userSchema.findOne({ email });
-    console.log(userEmail);
+
+    const userEmail = await User.findOne({ email: email.trim().toLowerCase() });
+
     if (!userEmail) {
       return res.status(404).json({ msg: `user doesn't exist` });
     }
-    const LoginToken = await bcrypt.compare(password, userEmail.password);
-    const jwtSignToken = jwt.sign(
-      { email: userEmail.email },
-      process.env.SECRET,
-      { expiresIn: "1hr" }
-    );
-    console.log(jwtSignToken);
-    res.cookie("Token", jwtSignToken);
-    res.status(200).redirect("/profile");
-  } catch (err) {
-    res.status(400).json({ error: "unable to login" });
-  }
-};
+    const userPassword = await userEmail.passwordCompare(password);
 
-const userSignup = async (req, res) => {
-  try {
-    const { fullName, email, password, conformPassword, role } = req.body;
-    if (password !== conformPassword) {
-      return res.status(400).send("passswod is not matching");
+    if (!userPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid password",
+      });
     }
+    const token = jwt.sign(
+      {
+        id: userEmail._id,
+        role: userEmail.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+    );
 
-    const hashPassword = await bcrypt.hash(password, 10);
-    const newUser = await userSchema.create({
-      fullName,
-      email,
-      password: hashPassword,
-      role,
+    res.cookie("Token", token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "Strict",
     });
-    console.log(newUser);
-    await newUser.save();
-    res.status(200).redirect("/profile");
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: userEmail._id,
+        fullName: userEmail.fullName,
+        role: userEmail.role,
+      },
+    });
   } catch (err) {
-    console.log(err);
-    res.status(400).json({ err: "unanle to singup" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: err.message });
   }
 };
-export { homePage, loginPage, signupPage, userSignup, userLogin, profilePage };
+
+export { userSignup, userLogin, userProfile, homePage };
