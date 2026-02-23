@@ -5,7 +5,7 @@ import bcrypt from "bcrypt";
 
 import userRoutes from "./routes/userRoutes.js";
 import connectDB from "./config/mongodb.js";
-import { homePage, userLogin, userSignup } from "./controllers/userData.js";
+import { homePage, userLogin, userSignup } from "./controllers/userAuth.js";
 
 const app = express();
 const port = process.env.PORT;

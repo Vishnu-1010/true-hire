@@ -4,7 +4,7 @@ import {
   userLogin,
   userProfile,
   homePage,
-} from "../controllers/userData.js";
+} from "../controllers/userAuth.js";
 import { validateSignUp } from "../middleware/signupValidation.js";
 import { userVerify } from "../middleware/userVerify.js";
 import { LoginValidation } from "../middleware/LoginValidation.js";
