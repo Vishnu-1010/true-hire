@@ -4,26 +4,28 @@ const userSchema = new mongoose.Schema(
   {
     fullName: {
       type: String,
-      require: true,
+      required: true,
+      trim: true,
     },
     email: {
       type: String,
-      require: true,
+      trim: true,
+      unique: true,
+      lowercase: true,
+      required: true,
     },
     password: {
       type: String,
-      require: true,
+      required: true,
     },
     role: {
       type: String,
       required: true,
-      enum: ["candidate", "employer", "admin"],
-      default: "Candidate",
+      enum: ["candidate", "recruiter"],
+      default: "candidate",
     },
-    isActive: { type: Boolean, default: true },
-    isVerified: { type: Boolean, default: false },
   },
-  { timestamps:true },
+  { timestamps: true },
 );
 userSchema.pre("save", async function (next) {
   // encrypting password before saving to database
