@@ -1,20 +1,29 @@
-import fs from "fs";
+import fs from "fs/promises";
 import cloudinary from "../config/cloudinary.js";
 
-export const uploadToCloudinary = async (
-  filePath,
-  folder,
-  resourceType = "image",
-) => {
+ const uploadToCloudinary = async (  filePath,folder = "uploads/temp",resourceType = "auto") => {
+  if (!filePath) {
+    throw new Error("File path is required");
+  }
+
   try {
     const result = await cloudinary.uploader.upload(filePath, {
       folder,
       resource_type: resourceType,
+      allowed_formats: ["jpg", "png", "pdf"],
     });
-    fs.unlinkSync(filePath); // delete local file after upload
+
     return result.secure_url;
   } catch (err) {
-    fs.unlinkSync(filePath); // cleanup even if upload fails
-    throw err;
+    throw err; // preserve original error
+  } finally {
+    
+    try {
+      await fs.unlink(filePath);
+    } catch (cleanupError) {
+      console.error("File cleanup failed:", cleanupError.message);
+    }
   }
 };
+
+export default uploadToCloudinary;
