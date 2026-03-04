@@ -6,6 +6,7 @@ const candidateProfile = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "userRegister", // Link to User model
       required: true,
+      unique:true
     },
     aboutMe: {
       type: String,
@@ -26,6 +27,7 @@ const candidateProfile = new mongoose.Schema(
       {
         type: String,
         trim: true,
+        lowercase:true,
       },
     ],
     experience: [
@@ -33,7 +35,7 @@ const candidateProfile = new mongoose.Schema(
         companyName: String,
         position: String,
         startDate: Date,
-        EndDate: Date,
+        endDate: Date,
         description: String,
       },
     ],
