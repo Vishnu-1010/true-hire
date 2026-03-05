@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 const recruiterProfile = mongoose.Schema(
   {
     user: {
@@ -27,4 +28,4 @@ const recruiterProfile = mongoose.Schema(
   },
   { timestamps: true },
 );
-module.exports = mongoose.model("recruiterProfile", recruiterProfile);
+export default mongoose.model("recruiterProfile", recruiterProfile);
