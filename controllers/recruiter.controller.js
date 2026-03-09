@@ -1,48 +1,57 @@
-import recruiterProfile from "../models/recruiterProfile.js";
+import recruiter from "../models/recruiterProfile.js"
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 
-const updateRecruiterProfile = async (req, res) => {
+const createRecruiter = async (req, res) => {
 try {
-  const { companyName, companyWebsite, companyDescription, location } =
-    req.body;
-  const { recruiterProfileImage, companyLogo } = req.files;
-  const id = req.user.id;
-  let recruiterProfileUrl,companyLogoUrl;
+  const { companyName , companyWebsite , companyDescription, location } = req.body;
+  const { recruiterImage, companyLogos } = req.files || {};
+  const id = req.user?.id;
+  if(!id){
+    return res.status(401).json({
+      success:false,
+      message:"unauthorized"
+    })
+  }
+
+  if (!companyName || !companyWebsite) {
+    return res
+      .status(400)
+      .json({
+        success: false,
+        message: "Company name and website are required",
+      });
+  }
   
   // Upload profile image if exists
-  if (recruiterProfileImage?.[0]) {
-   recruiterProfileUrl = await uploadToCloudinary(
-      recruiterProfileImage[0].path,
-      "jobportal/recruiterImage",
-      "image",
-    );
-   
-  } else {
-    console.log("No profile image uploaded");
-  }
-   if (companyLogo?.[0]) {
-   companyLogoUrl = await uploadToCloudinary(
-     companyLogo[0].path,
-     "jobportal/companyLogo",
-     "image",
-   );
+ 
+  const recruiterProfileUrl = recruiterImage?.[0]
+    ? await uploadToCloudinary(
+        recruiterImage[0].path,
+        "jobportal/recruiter/recruiterImage",
+        "image",
+      )
+    : null;
+
+  const companyLogoUrl = companyLogos?.[0]
+    ? await uploadToCloudinary(
+        companyLogos[0].path,
+        "jobportal/recruiter/companyLogo",
+        "image",
+      )
+    : null;
+
   
-  } else {
-    console.log("No profile image uploaded");
-  }
-  const profile = await recruiterProfile.findOneAndUpdate(
-    { user: id },
-    {
-      companyName,
-      companyWebsite,
-      companyDescription,
-      location,
-      recruiterProfileImage:recruiterProfileUrl,
-      companyLogo:companyLogoUrl
-    },
+const updateData = { companyName, companyWebsite, companyDescription, location};
+
+if (recruiterProfileUrl) updateData.recruiterProfileImage = recruiterProfileUrl;
+if (companyLogoUrl) updateData.companyLogo = companyLogoUrl;
+  
+  const profile = await recruiter.findOneAndUpdate(
+    { recruiter: id },
+    updateData,
     { new: true, upsert: true },
   );
-  //await profile.save();
+
   return res.status(201).json({
     success: true,
     message: "successfully created recruiter profile",
@@ -55,5 +64,98 @@ try {
 }
 
 };
+// get recruiter profile
+const getRecruiter= async(req,res) =>{
+try {
+  const id = req.user?.id;
+   if (!id) {
+     return res.status(401).json({
+       success: true,
+       message: "unauthorized",
+     });
+   }
+  const getRecruiter = await recruiter
+    .findOne({ recruiter: id })
+    .populate("recruiter","fullName email role");
+  if(!getRecruiter)
+  {
+    
+    return res.status(404).json({
+      success:false,
+      message:"user does't exist"
+    })
+  }
 
-export {updateRecruiterProfile};
+  return res.status(200).json({
+    success:true,
+    data:getRecruiter
+  })
+} catch (err) {
+  return res.status(500).json({
+    success:false,
+    message:err.message
+  })
+}
+}
+
+//upadate recruiter profile
+ 
+const updateRecruiter = async (req, res) => {
+  try {
+    const id = req.user?.id; 
+    if (!id) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const { companyName, companyWebsite, companyDescription, location } =  req.body || {};
+
+    // Build update object only with provided fields
+    const updateData = {};
+    if (companyName) updateData.companyName = companyName;
+    if (companyWebsite) updateData.companyWebsite = companyWebsite;
+    if (companyDescription) updateData.companyDescription = companyDescription;
+    if (location) updateData.location = location;
+
+    // update images if files are sent
+    const { recruiterImage, companyLogos } = req.files || {};
+    if (recruiterImage?.[0]) {
+      updateData.recruiterProfileImage = await uploadToCloudinary(
+        recruiterImage[0].path,
+        "jobportal/recruiter/recruiterImage",
+        "image",
+      );
+    }
+    if (companyLogos?.[0]) {
+      updateData.companyLogo = await uploadToCloudinary(
+        companyLogos[0].path,
+        "jobportal/recruiter/companyLogo",
+        "image",
+      );
+    }
+
+    // Update recruiter profile
+    const updatedProfile = await recruiter.findOneAndUpdate(
+      { recruiter: id },
+      { $set: updateData },
+      { new: true },
+    );
+
+    if (!updatedProfile) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Recruiter profile not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedProfile,
+    });
+  } catch (err) {
+    console.error("updateRecruiter error:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server error" });
+  }
+};
+
+export {createRecruiter,getRecruiter,updateRecruiter};
