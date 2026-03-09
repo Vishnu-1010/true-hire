@@ -1,98 +1,214 @@
-import express from "express";
-import cookieParser from "cookie-parser";
-import candiateProfile from "../models/candiateProfile.js";
+import candidate from "../models/candiateProfile.js";
 import uploadToCloudinary from "../utils/cloudinaryUpload.js";
 
-const app = express();
-app.use(cookieParser());
-
-const updateCandidateProfile = async (req, res) => {
+const createCandidate = async (req, res) => {
   try {
-    const { aboutMe, education, skills, experience } = req.body;
-    const { profileImage, resume } = req.files;
-    const id = req.user?.id; //getting data from middleware
+    const id = req.user?.id; 
+       if (!id) {
+         return res.status(401).json({
+           success: false,
+           message: "User not authenticated",
+         });
+       }
+    let { aboutMe, education, skills, experience } = req.body;
+    const profileImage = req.files?.profileImage?.[0];
+    const resume = req.files?.resume?.[0];
 
-    const educationObj = {
-      collegeName: education?.collegeName,
-      startYear: education?.startYear,
-      endYear: education?.endYear,
-      branch: education?.branch,
-      cgpa: education?.cgpa,
+try {
+  experience = experience ? JSON.parse(experience) : [];
+  if (!Array.isArray(experience)) experience = [experience];
+} catch {
+  return res.status(400).json({ message: "Invalid experience format" });
+}
+try {
+  education = education ? JSON.parse(education) : {};
+} catch {
+  return res.status(400).json({ message: "Invalid education format" });
+}
+    if (skills){ 
+      skills = skills.split(",").map((s) => s.trim().toLowerCase())
+
     };
-
-    //to handle multiple experience
-    const experiences =
-      experience
-        ?.map((exp) => ({
-          companyName: exp?.companyName,
-          position: exp?.position,
-          startDate: exp?.startDate,
-          endDate: exp?.endDate,
-          description: exp?.description,
-        }))
-        .filter((exp) => exp.companyName || exp.position) || [];
-
-    //Adding skills
-    let skillsArray = [];
-    if (skills) {
-      skillsArray = Array.isArray(skills) ? skills : skills.split(",");
-    }
-    skillsArray = skillsArray.map((s) => s.trim().toLowerCase()); // converting to lower case
-    skillsArray = skillsArray.filter((s) => s.length > 0); // removing white space
-    skillsArray = [...new Set(skillsArray)]; // remove duplicates
-
+    let { startYear="", endYear="", collegeName="", branch="" } = education;
+   
     // uploading profile img and resume to cloudinary
     let profileImageUrl, resumeUrl;
+  
 
-   
-    // Upload profile image if exists
-    if (profileImage?.[0]) {
+    if (profileImage) {
       profileImageUrl = await uploadToCloudinary(
-        profileImage[0].path,
-        "jobportal/profileImages",
+        profileImage.path,
+        "jobportal/candidate/profileImages",
         "image",
       );
-      
-    } else {
-      console.log("No profile image uploaded");
     }
-    // Upload resume if exists
-    if (resume?.[0]) {
-      resumeUrl = await uploadToCloudinary(
-        resume[0].path,
-        "jobportal/resumes",
-        "raw",
-      );
-      
-    } else {
-      console.log("No resume uploaded");
-    }
-    const updateUser = await candiateProfile.findOneAndUpdate(
-      { user: id },
-      {
-        aboutMe,
-        education: educationObj,
-        skills: skillsArray,
-        experience: experiences,
-        profileImage: profileImageUrl,
-        resume: resumeUrl,
-      },
-      { new: true, upsert: true }, // it will update the document
-    );
-    await updateUser.save();
 
-    console.log(id);
+    if (resume) {
+      resumeUrl = await uploadToCloudinary(
+        resume.path.replace(/\\/g, "/"),
+        "jobportal/candidate/resumes",
+        "auto",
+      );
+    }
+const updatedProfile = await candidate.findOneAndUpdate(
+  { user: id },
+  {
+    $set: {
+      aboutMe,
+      education: { collegeName, startYear, endYear, branch },
+      skills: skills ? [...new Set(skills)] : [],
+      profileImage: profileImageUrl,
+      resume: resumeUrl,
+    },
+    $push: { experience: { $each: experience } },
+  },
+  { new: true, upsert: true },
+);
+
     return res.status(201).json({
       success: true,
       message: "profile updated successfully",
     });
   } catch (err) {
-    console.log("error at profile");
+    console.error("Error at candidate profile:", err);
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
+      message: err.message,
     });
   }
 };
-export { updateCandidateProfile };
 
+
+
+
+//  get candidate profile
+const getCandidate = async (req, res) => {
+  try {
+    const id = req.user?.id;
+
+    if (!id) {
+      return res.status(401).json({
+        success: false,
+        message: "unauthorized",
+      });
+    }
+    let getUser = await candidate.findOne({ user: id }).populate("user","fullName email role").lean();
+    if(!getUser){
+      return res.status(404).json({
+        success:false,
+        message:"candidate profile dosen't exist"
+      })
+    }
+    return res.status(200).json({
+      success: true,
+      data: getUser,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
+  }
+};
+
+const updateCandidate = async (req, res) => {
+  try {
+    // Get logged-in user id
+    const id = req.user?.id;
+
+    if (!id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const { aboutMe, education, skills, experience } = req.body;
+    const profileImage = req.files?.profileImage?.[0];
+    const resume = req.files?.resume?.[0];
+
+    const updateData = {};
+
+    //  About Me
+    if (aboutMe !== undefined) {
+      updateData.aboutMe = aboutMe;
+    }
+
+    // Skills
+    if (skills !== undefined) {
+      const newSkills = skills.split(",").map((skill) => skill.trim().toLowerCase());
+
+      const existingProfile = await candidate.findOne({ user: id });
+      const existingSkills = existingProfile?.skills || [];
+
+      // merge old + new skills and remove duplicates
+      updateData.skills = [...new Set([...existingSkills, ...newSkills])];
+    }
+
+    //  Education
+    if (education !== undefined) {
+      try {
+        const parsedEducation = JSON.parse(education);
+        updateData.education = parsedEducation;
+      } catch (error) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid education format",
+        });
+      }
+    }
+
+    let newExperience = [];
+    if (experience !== undefined) {
+      try {
+        const parsed = JSON.parse(experience);
+        newExperience = Array.isArray(parsed) ? parsed : [parsed];
+      } catch {
+        return res.status(400).json({ success: false, message: "Invalid experience format" });
+      }
+    }
+
+
+    //  Profile Image
+    if (profileImage) {
+      updateData.profileImage = await uploadToCloudinary(
+          profileImage.path,
+          "jobportal/candidate/profileImages",
+          "image",
+        );
+      }
+
+    // Resume
+    if (resume) {
+      updateData.resume = await uploadToCloudinary(
+          resume.path.replace(/\\/g, "/"),
+          "jobportal/candidate/resumes",
+          "auto",
+        );
+    }
+
+    //Update or create profile
+    const updatedProfile = await candidate.findOneAndUpdate(
+      { user: id },
+      { $set: updateData,
+        ...(newExperience.length>0 && {$push:{experience:{$each:newExperience}}})
+       },
+      { new: true, upsert: true },
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      data: updatedProfile,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export { createCandidate, getCandidate, updateCandidate };
