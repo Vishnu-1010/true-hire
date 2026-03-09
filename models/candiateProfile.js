@@ -4,9 +4,9 @@ const candidateProfile = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "userRegister", // Link to User model
+      ref: "user", // Link to User model
       required: true,
-      unique:true
+      unique: true,
     },
     aboutMe: {
       type: String,
@@ -21,13 +21,12 @@ const candidateProfile = new mongoose.Schema(
         type: Number,
       },
       branch: { type: String, trim: true },
-      cgpa: { type: Number },
     },
     skills: [
       {
         type: String,
         trim: true,
-        lowercase:true,
+        lowercase: true,
       },
     ],
     experience: [
@@ -45,4 +44,4 @@ const candidateProfile = new mongoose.Schema(
   { timestamps: true },
 );
 
-export default mongoose.model("candidateProfile", candidateProfile);
+export default mongoose.model("candidate", candidateProfile);
