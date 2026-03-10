@@ -1,19 +1,36 @@
 import jwt from "jsonwebtoken";
-
 const userVerify = (req, res, next) => {
-  const verifyToken = req.cookies.Token || req.headers.authorization?.split(" ")[1];
+  try {
+    const token =
+      req.cookies.Token || (req.headers.authorization && req.headers.authorization.startsWith("Bearer ") ? req.headers.authorization.split(" ")[1] : null);
 
- 
-  if (!verifyToken) {
-    return res.status(401).json({ success: false, message: "unauthorized" });
-  }
-
-  jwt.verify(verifyToken, process.env.JWT_SECRET, (err, data) => {
-    if (err) {
-      return res.status(403).json({ success:false,message: "Invalid User" });
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-    req.user = data;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; 
     next();
-  });
+  } catch (err) {
+    return res
+      .status(403)
+      .json({ success: false, message: "Forbidden: Invalid token" });
+  }
 };
-export { userVerify };
+
+
+const authorizeRoles = (...allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
+    next();
+  };
+};
+
+export { userVerify, authorizeRoles };
