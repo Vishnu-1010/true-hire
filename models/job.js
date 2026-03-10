@@ -1,11 +1,10 @@
-// models/Job.js
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const jobSchema = new mongoose.Schema(
   {
     recruiter: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "userRegister",
+      ref: "User",
       required: true,
     },
 
@@ -14,17 +13,25 @@ const jobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
-    company: {
+    description: {
       type: String,
       required: true,
       trim: true,
     },
-
     location: {
       type: String,
+      required: true,
       trim: true,
     },
+    skills: [
+      {
+         type: String,
+          trim: true
+         }],
+    requirements: [{
+       type: String,
+        trim: true 
+      }],
 
     jobType: {
       type: String,
@@ -33,31 +40,110 @@ const jobSchema = new mongoose.Schema(
     },
 
     salary: {
-      type: Number,
+      min: Number,
+      max: Number,
+      currency: {
+        type: String,
+        default: "INR",
+      },
     },
-
-    description: {
+    experienceLevel: {
       type: String,
+      enum: ["entry", "mid", "senior"],
       required: true,
     },
 
-    requirements: [
-      {
-        type: String,
-        trim: true,
+    experienceYears: {
+      min: {
+        type: Number,
+        default: 0,
       },
-    ],
-
-    experienceLevel: {
-      type: String,
-      enum: ["fresher", "junior", "mid", "senior"],
+      max: {
+        type: Number,
+      },
     },
-
-    deadline: {
-      type: Date,
+    isClosed: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true },
 );
 
-module.exports = mongoose.model("jobSchema", jobSchema);
+module.exports = mongoose.model("Job", jobSchema);
+
+
+
+
+
+
+
+
+
+
+
+// import mongoose from "mongoose";
+
+// const jobSchema = new mongoose.Schema(
+//   {
+//     recruiter: {
+//       type: mongoose.Schema.Types.ObjectId,
+//       ref: "User",
+//       required: true,
+//     },
+//     company: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     title: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     description: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     location: {
+//       type: String,
+//       required: true,
+//       trim: true,
+//     },
+//     skills: [{ type: String, trim: true }],
+//     requirements: [{ type: String, trim: true }],
+//     jobType: {
+//       type: String,
+//       enum: ["full-time", "part-time", "internship", "contract"],
+//       required: true,
+//     },
+//     salary: {
+//       min: { type: Number },
+//       max: { type: Number },
+//       currency: { type: String, default: "INR" },
+//     },
+//     experienceLevel: {
+//       type: String,
+//       enum: ["entry", "mid", "senior"],
+//       required: true,
+//     },
+//     experienceYears: {
+//       min: { type: Number, default: 0 },
+//       max: { type: Number },
+//     },
+//     status: {
+//       type: String,
+//       enum: ["open", "closed"],
+//       default: "open",
+//     },
+//     applicationsCount: { type: Number, default: 0 },
+//     deadline: Date,
+//   },
+//   { timestamps: true },
+// );
+
+// // For text search
+// jobSchema.index({ title: "text", description: "text", skills: "text" });
+
+// export default mongoose.model("Job", jobSchema);

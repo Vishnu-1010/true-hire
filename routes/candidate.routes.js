@@ -1,7 +1,7 @@
 import express from "express";
 import { createCandidate, getCandidate,updateCandidate} from "../controllers/candidate.controller.js";
 import { userVerify } from "../middleware/userVerify.js";
-import { candidateOnly } from "../middleware/candidateMiddleware.js";
+import { candidateOnly } from "../middleware/roles.js";
 import { upload } from "../middleware/multer.js";
 
 const router = express.Router();

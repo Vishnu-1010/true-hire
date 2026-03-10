@@ -4,7 +4,7 @@ const candidateProfile = new mongoose.Schema(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user", // Link to User model
+      ref: "User", // Link to User model
       required: true,
       unique: true,
     },
@@ -44,4 +44,4 @@ const candidateProfile = new mongoose.Schema(
   { timestamps: true },
 );
 
-export default mongoose.model("candidate", candidateProfile);
+export default mongoose.model("Candidate", candidateProfile);

@@ -4,7 +4,7 @@ const recruiterProfile = mongoose.Schema(
   {
     recruiter: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
       required: true,
     },
     companyName: {
@@ -28,4 +28,4 @@ const recruiterProfile = mongoose.Schema(
   },
   { timestamps: true },
 );
-export default mongoose.model("recruiter", recruiterProfile);
+export default mongoose.model("Recruiter", recruiterProfile);

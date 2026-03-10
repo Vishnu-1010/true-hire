@@ -32,10 +32,10 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   } else {
-    const salt = bcrypt.genSaltSync(10);
-    const hash = bcrypt.hashSync(this.password, salt);
-    this.password = hash;
-    next();
+   const salt = await bcrypt.genSalt(10);
+   const hash = await bcrypt.hash(this.password, salt);
+   this.password = hash;
+   next();
   }
 });
 
@@ -44,4 +44,4 @@ userSchema.methods.passwordCompare = async function (pass) {
   return await bcrypt.compare(pass, this.password);
 };
 
-export default mongoose.model("user", userSchema);
+export default mongoose.model("User", userSchema);

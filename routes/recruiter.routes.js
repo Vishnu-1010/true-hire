@@ -3,7 +3,7 @@ const router = express();
 
 import { userVerify } from "../middleware/userVerify.js";
 import { createRecruiter,getRecruiter,updateRecruiter } from "../controllers/recruiter.controller.js";
-import { recruiterOnly } from "../middleware/recruiterMiddleware.js";
+import { recruiterOnly } from "../middleware/roles.js";
 import { upload } from "../middleware/multer.js";
 router.post(
   "/profile",
