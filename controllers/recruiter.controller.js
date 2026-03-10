@@ -1,5 +1,5 @@
 import recruiter from "../models/recruiterProfile.js"
-import uploadToCloudinary from "../utils/cloudinaryUpload.js";
+import uploadToImageKit  from "../utils/imagekitUpload.js";
 
 const createRecruiter = async (req, res) => {
 try {
@@ -25,10 +25,9 @@ try {
   // Upload profile image if exists
  
   const recruiterProfileUrl = recruiterImage?.[0]
-    ? await uploadToCloudinary(
+    ? await uploadToImageKit(
         recruiterImage[0].path,
         "jobportal/recruiter/recruiterImage",
-        "image",
       )
     : null;
 
@@ -36,7 +35,6 @@ try {
     ? await uploadToCloudinary(
         companyLogos[0].path,
         "jobportal/recruiter/companyLogo",
-        "image",
       )
     : null;
 
@@ -118,19 +116,17 @@ const updateRecruiter = async (req, res) => {
     // update images if files are sent
     const { recruiterImage, companyLogos } = req.files || {};
     if (recruiterImage?.[0]) {
-      updateData.recruiterProfileImage = await uploadToCloudinary(
-        recruiterImage[0].path,
-        "jobportal/recruiter/recruiterImage",
-        "image",
-      );
+      updateData.recruiterProfileImage =  await uploadToImageKit(
+            recruiterImage[0].path,
+            "jobportal/recruiter/recruiterImage",
+          );
     }
     if (companyLogos?.[0]) {
       updateData.companyLogo = await uploadToCloudinary(
-        companyLogos[0].path,
-        "jobportal/recruiter/companyLogo",
-        "image",
-      );
-    }
+            companyLogos[0].path,
+            "jobportal/recruiter/companyLogo",
+          )
+        }
 
     // Update recruiter profile
     const updatedProfile = await recruiter.findOneAndUpdate(

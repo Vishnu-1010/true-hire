@@ -1,10 +1,6 @@
 import User from "../models/signup.js";
 import jwt from "jsonwebtoken";
 
-// home
-const homePage = (req, res) => {
-  res.send("home");
-};
 
 //signup
 const userSignup = async (req, res) => {
@@ -14,7 +10,7 @@ const userSignup = async (req, res) => {
       email: email.trim().toLowerCase(),
     });
     if (emailExist) {
-      return res.status(409).json({
+      return res.status(401).json({
         success: false,
         message:
           "Email already registered. Please use a different email or login.",
@@ -27,6 +23,8 @@ const userSignup = async (req, res) => {
       role,
     });
     await user.save();
+
+    // creating jwt token
     const token = jwt.sign(
       {
         id: user._id,
@@ -35,17 +33,20 @@ const userSignup = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" },
     );
-
+    //set token
     res.cookie("Token", token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
-      maxAge:"7*24*60*60*10000"
+      maxAge: 60 * 60 * 1000
     });
-
-    return res.status(201).redirect("/profile");
+   return res.status(201).json({
+      success: true,
+      role: role,
+      token: token,
+    });
   } catch (err) {
-    console.log("signup page error:", err);
+    console.log("signup page error:", err.message);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -56,24 +57,19 @@ const userSignup = async (req, res) => {
 
 //login
 
-const userProfile = (req, res) => {
-  res.send("profile");
-};
 const userLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const userEmail = await User.findOne({ email: email.trim().toLowerCase() });
 
-    if (!userEmail) {
-      return res.status(404).json({ msg: `user doesn't exist` });
-    }
+    
     const userPassword = await userEmail.passwordCompare(password);
 
-    if (!userPassword) {
+    if (!userEmail || !userPassword) {
       return res.status(401).json({
         success: false,
-        message: "Invalid password",
+        message: "Invalid Credentials",
       });
     }
     const token = jwt.sign(
@@ -87,19 +83,14 @@ const userLogin = async (req, res) => {
 
     res.cookie("Token", token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
+      maxAge: 60 * 60 * 1000,
     });
-    res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
-        id: userEmail._id,
-        fullName: userEmail.fullName,
-        role: userEmail.role,
-      },
-    });
+  return res.status(200).json({
+    success: true,
+    role: userEmail.role,
+  });
   } catch (err) {
     res
       .status(500)
@@ -107,4 +98,4 @@ const userLogin = async (req, res) => {
   }
 };
 
-export { userSignup, userLogin, userProfile, homePage };
+export { userSignup, userLogin };

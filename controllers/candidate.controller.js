@@ -1,5 +1,6 @@
 import candidate from "../models/candiateProfile.js";
-import uploadToCloudinary from "../utils/cloudinaryUpload.js";
+import uploadToImageKit from "../utils/imagekitUpload.js";
+
 
 const createCandidate = async (req, res) => {
   try {
@@ -36,18 +37,16 @@ try {
   
 
     if (profileImage) {
-      profileImageUrl = await uploadToCloudinary(
+      profileImageUrl = await uploadToImageKit(
         profileImage.path,
         "jobportal/candidate/profileImages",
-        "image",
       );
     }
 
     if (resume) {
-      resumeUrl = await uploadToCloudinary(
+      resumeUrl = await uploadToImageKit(
         resume.path.replace(/\\/g, "/"),
         "jobportal/candidate/resumes",
-        "auto",
       );
     }
 const updatedProfile = await candidate.findOneAndUpdate(
@@ -171,20 +170,18 @@ const updateCandidate = async (req, res) => {
 
     //  Profile Image
     if (profileImage) {
-      updateData.profileImage = await uploadToCloudinary(
-          profileImage.path,
-          "jobportal/candidate/profileImages",
-          "image",
-        );
+      updateData.profileImage = await uploadToImageKit(
+        profileImage.path,
+        "jobportal/candidate/profileImages",
+      );
       }
 
     // Resume
     if (resume) {
-      updateData.resume = await uploadToCloudinary(
-          resume.path.replace(/\\/g, "/"),
-          "jobportal/candidate/resumes",
-          "auto",
-        );
+      updateData.resume = await uploadToImageKit(
+        resume.path.replace(/\\/g, "/"),
+        "jobportal/candidate/resumes",
+      );
     }
 
     //Update or create profile
