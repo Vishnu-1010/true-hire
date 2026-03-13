@@ -7,7 +7,7 @@ import connectDB from "./config/mongodb.js";
 import authRoutes from "./routes/auth.routes.js";
 import candidateRoutes from "./routes/candidate.routes.js";
 import recruiterRoutes from "./routes/recruiter.routes.js"
-
+import jobRoutes from "./routes/jobs.routes.js"
 import cors from "cors";
 
 const app = express();
@@ -41,12 +41,13 @@ app.use(cookieParser());
 app.use("/auth",authRoutes);
 app.use("/candidate",candidateRoutes);
 app.use("/recruiter",recruiterRoutes);
-//page not found handler
-
+app.use("/jobs",jobRoutes);
 // Default page handler
 app.get("/", (req, res) => {
   res.send("Welcome to Job Portal API");
 });
+
+//page not found handler
 app.use((req, res) => {
   res.status(404).send("pageNotFound");
 });
