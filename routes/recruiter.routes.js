@@ -1,10 +1,10 @@
 import express from "express";
 const router = express();
 
-import { userVerify } from "../middleware/userVerify.js";
+import { userVerify } from "../middleware/auth/userVerify.js";
 import { createRecruiter,getRecruiter,updateRecruiter } from "../controllers/recruiter.controller.js";
-import { recruiterOnly } from "../middleware/roles.js";
-import { upload } from "../middleware/multer.js";
+import { recruiterOnly } from "../middleware/auth/roles.js";
+import { upload } from "../middleware/upload/multer.js";
 router.post(
   "/profile",
   userVerify,
