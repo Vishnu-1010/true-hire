@@ -1,7 +1,6 @@
 import User from "../models/signup.js";
 import jwt from "jsonwebtoken";
 
-
 //signup
 const userSignup = async (req, res) => {
   try {
@@ -22,25 +21,26 @@ const userSignup = async (req, res) => {
       password,
       role,
     });
+
     await user.save();
 
-    // creating jwt token
     const token = jwt.sign(
       {
         id: user._id,
         role: user.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" },
+      { expiresIn: "4h" }, // temporary
     );
+
     //set token
     res.cookie("Token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000
+      secure: true,
+      sameSite: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-   return res.status(201).json({
+    return res.status(201).json({
       success: true,
       role: role,
       token: token,
@@ -54,7 +54,6 @@ const userSignup = async (req, res) => {
   }
 };
 
-
 //login
 
 const userLogin = async (req, res) => {
@@ -63,39 +62,61 @@ const userLogin = async (req, res) => {
 
     const userEmail = await User.findOne({ email: email.trim().toLowerCase() });
 
-    
-    const userPassword = await userEmail.passwordCompare(password);
-
-    if (!userEmail || !userPassword) {
+    if (!userEmail) {
       return res.status(401).json({
         success: false,
         message: "Invalid Credentials",
       });
     }
+
+    const userPassword = await userEmail.passwordCompare(password);
+
+    if (!userPassword) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
     const token = jwt.sign(
       {
         id: userEmail._id,
         role: userEmail.role,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "1h" },
+      { expiresIn: "4h" }, // temporary
     );
 
     res.cookie("Token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Strict",
-      maxAge: 60 * 60 * 1000,
+      secure: true,
+      sameSite: process.env.NODE_ENV === "production",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-  return res.status(200).json({
-    success: true,
-    role: userEmail.role,
-  });
+    return res.status(200).json({
+      success: true,
+      token: token,
+    });
   } catch (err) {
     res
       .status(500)
       .json({ success: false, message: "Server error", error: err.message });
   }
 };
+const logout = async (req, res) => {
+  const token = req.cookies.Token;
 
-export { userSignup, userLogin };
+  // find user by refresh token
+  const user = await User.findOne({ refreshToken: token });
+
+  // clear cookie
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "Strict",
+  });
+
+  return res.json({ message: "Logged out" });
+};
+
+export { userSignup, userLogin, logout };

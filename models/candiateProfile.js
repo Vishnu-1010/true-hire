@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose from "mongoose";
 
 const candidateProfile = new mongoose.Schema(
   {
@@ -13,20 +13,29 @@ const candidateProfile = new mongoose.Schema(
       trim: true,
     },
     education: {
-      collegeName: { type: String, trim: true },
+      collegeName: {
+         type: String,
+          trim: true,
+           required: true 
+          },
+      degree:{
+        type:String,
+        trim:true
+      },
+      branch: { type: String, trim: true },
       startYear: {
         type: Number,
       },
       endYear: {
         type: Number,
       },
-      branch: { type: String, trim: true },
     },
     skills: [
       {
         type: String,
         trim: true,
         lowercase: true,
+        index:true
       },
     ],
     experience: [
