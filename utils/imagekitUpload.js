@@ -7,7 +7,7 @@ const uploadToImageKit = async (filePath, folder = "/uploads/temp") => {
 
   try {
     const fileBuffer = await fs.readFile(filePath);
-    const fileName = path.basename(filePath); // <-- now works
+    const fileName = path.basename(filePath);
 
     const result = await imagekit.upload({
       file: fileBuffer,
@@ -15,14 +15,12 @@ const uploadToImageKit = async (filePath, folder = "/uploads/temp") => {
       folder,
       useUniqueFileName: true,
     });
-await fs.unlink(filePath);
+
     return result.url;
   } catch (err) {
-    await fs.unlink(filePath);
     console.error("ImageKit upload failed:", err.message);
     throw err;
   } finally {
-    // Always try to delete local temp file
     try {
       await fs.unlink(filePath);
       console.log("Temp file deleted:", filePath);
@@ -33,5 +31,4 @@ await fs.unlink(filePath);
     }
   }
 };
-
 export default uploadToImageKit;
