@@ -1,5 +1,15 @@
 import {authorizeRoles} from "./userVerify.js";
 const candidateOnly = authorizeRoles("candidate");
-const recruiterOnly  = authorizeRoles("recruiter");
+const recruiterOnly = authorizeRoles("recruiter");
 
-export {candidateOnly,recruiterOnly};
+const adminOnly = (req,res,next)=>{
+    if(req.user.role !== "admin"){
+        return res.status(403).json({
+            success:false,
+            message:"Admin only"
+        })
+    }
+    next();
+}
+
+export {candidateOnly,recruiterOnly,adminOnly};
