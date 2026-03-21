@@ -20,5 +20,5 @@ const applyLimiter = rateLimit({
   message:"applying job limit excited",
   statusCode: 429,
 });
-export { loginLimter, signupLimter, searchLimiter, applyLimiter };
+export { loginLimter, signupLimter,applyLimiter };
 //  inject them in routers
