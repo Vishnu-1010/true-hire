@@ -19,12 +19,14 @@ const jobSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    location: [{
-      type: String,
-      required: true,
-      trim: true,
-      index: true,
-    }],
+    location: [
+      {
+        type: String,
+        required: true,
+        trim: true,
+        index: true,
+      },
+    ],
     skills: [
       {
         type: String,
@@ -72,7 +74,7 @@ const jobSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["open", "closed"],
+      enum: ["open", "closed", "deleted"],
       default: "open",
     },
     applicationsCount: { type: Number, default: 0 },
@@ -80,7 +82,7 @@ const jobSchema = new mongoose.Schema(
       type: Date,
       default: () => {
         const now = new Date();
-        now.setDate(now.getDate() + 7); // +7 days
+        now.setDate(now.getDate() + 30); 
         return now;
       },
     },
@@ -90,25 +92,19 @@ const jobSchema = new mongoose.Schema(
 
 // inside Job schema file
 jobSchema.virtual("applications", {
-  ref: "Application",   // model name
-  localField: "_id",    // Job _id
-  foreignField: "job",  // Application.job points here
-  justOne: false
+  ref: "Application", // model name
+  localField: "_id", // Job _id
+  foreignField: "job", // Application.job points here
+  justOne: false,
 });
 
 // enable virtuals in JSON output
 jobSchema.set("toJSON", { virtuals: true });
 jobSchema.set("toObject", { virtuals: true });
 
-
+jobSchema.index({
+  title: "text",
+  description: "text",
+  skills: "text",
+});
 export default mongoose.model("Job", jobSchema);
-
-
-
-
-
-
-
-
-
-
