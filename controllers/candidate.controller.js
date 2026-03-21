@@ -1,40 +1,45 @@
 import candidate from "../models/candiateProfile.js";
 import uploadToImageKit from "../utils/imagekitUpload.js";
 
-
 const createCandidate = async (req, res) => {
   try {
-    const id = req.user?.id; 
-       if (!id) {
-         return res.status(401).json({
-           success: false,
-           message: "User not authenticated",
-         });
-       }
+    const id = req.user?.id;
+    if (!id) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated",
+      });
+    }
     let { aboutMe, education, skills, experience } = req.body;
     const profileImage = req.files?.profileImage?.[0];
     const resume = req.files?.resume?.[0];
 
-try {
-  experience = experience ? JSON.parse(experience) : [];
-  if (!Array.isArray(experience)) experience = [experience];
-} catch {
-  return res.status(400).json({ message: "Invalid experience format" });
-}
-try {
-  education = education ? JSON.parse(education) : {};
-} catch {
-  return res.status(400).json({ message: "Invalid education format" });
-}
-    if (skills){ 
-      skills = skills.split(",").map((s) => s.trim().toLowerCase())
+    try {
+      experience = experience ? JSON.parse(experience) : [];
+      if (!Array.isArray(experience)) experience = [experience];
+    } catch {
+      return res.status(400).json({ message: "Invalid experience format" });
+    }
+    try {
+      education = education ? JSON.parse(education) : {};
+    } catch {
+      return res.status(400).json({ message: "Invalid education format" });
+    }
 
-    };
-    let { startYear="", endYear="", collegeName="", branch="" } = education;
-   
+  
+
+    if (skills) {
+      skills = skills.split(",").map((s) => s.trim().toLowerCase());
+    }
+    let {
+      startYear = null,
+      endYear = null,
+      collegeName = "",
+      branch = "",
+    } = education || {};
+
     // uploading profile img and resume to cloudinary
     let profileImageUrl, resumeUrl;
-  
 
     if (profileImage) {
       profileImageUrl = await uploadToImageKit(
@@ -49,20 +54,22 @@ try {
         "jobportal/candidate/resumes",
       );
     }
-const updatedProfile = await candidate.findOneAndUpdate(
-  { user: id },
-  {
-    $set: {
-      aboutMe,
-      education: { collegeName, startYear, endYear, branch },
-      skills: skills ? [...new Set(skills)] : [],
-      profileImage: profileImageUrl,
-      resume: resumeUrl,
-    },
-    $push: { experience: { $each: experience } },
-  },
-  { new: true, upsert: true },
-);
+
+    const createProfile = await candidate.findOneAndUpdate(
+      { user: id },
+      {
+        $set: {
+          user: id,
+          aboutMe,
+          education: { collegeName, startYear, endYear, branch },
+          skills,
+          experience,
+          profileImage: profileImageUrl,
+          resume: resumeUrl,
+        },
+      },
+      { new: true, upsert: true },
+    );
 
     return res.status(201).json({
       success: true,
@@ -112,10 +119,9 @@ const getCandidate = async (req, res) => {
 
 const updateCandidate = async (req, res) => {
   try {
-    // Get logged-in user id
-    const id = req.user?.id;
+    const userId = req.user.id;
 
-    if (!id) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -126,30 +132,26 @@ const updateCandidate = async (req, res) => {
     const profileImage = req.files?.profileImage?.[0];
     const resume = req.files?.resume?.[0];
 
-    const updateData = {};
+    const updateData = {
+      user: userId, 
+    };
 
-    //  About Me
-    if (aboutMe !== undefined) {
+
+    if (aboutMe) {
       updateData.aboutMe = aboutMe;
     }
 
-    // Skills
-    if (skills !== undefined) {
-      const newSkills = skills.split(",").map((skill) => skill.trim().toLowerCase());
-
-      const existingProfile = await candidate.findOne({ user: id });
-      const existingSkills = existingProfile?.skills || [];
-
-      // merge old + new skills and remove duplicates
-      updateData.skills = [...new Set([...existingSkills, ...newSkills])];
+    
+    if (skills) {
+      updateData.skills = skills
+        .split(",")
+        .map((skill) => skill.trim().toLowerCase());
     }
 
-    //  Education
-    if (education !== undefined) {
+    if (education) {
       try {
-        const parsedEducation = JSON.parse(education);
-        updateData.education = parsedEducation;
-      } catch (error) {
+        updateData.education = JSON.parse(education);
+      } catch {
         return res.status(400).json({
           success: false,
           message: "Invalid education format",
@@ -157,26 +159,28 @@ const updateCandidate = async (req, res) => {
       }
     }
 
-    let newExperience = [];
-    if (experience !== undefined) {
+   
+    if (experience) {
       try {
         const parsed = JSON.parse(experience);
-        newExperience = Array.isArray(parsed) ? parsed : [parsed];
+        updateData.experience = Array.isArray(parsed) ? parsed : [parsed];
       } catch {
-        return res.status(400).json({ success: false, message: "Invalid experience format" });
+        return res.status(400).json({
+          success: false,
+          message: "Invalid experience format",
+        });
       }
     }
 
-
-    //  Profile Image
+    // Profile Image Upload
     if (profileImage) {
       updateData.profileImage = await uploadToImageKit(
         profileImage.path,
         "jobportal/candidate/profileImages",
       );
-      }
+    }
 
-    // Resume
+    // Resume Upload
     if (resume) {
       updateData.resume = await uploadToImageKit(
         resume.path.replace(/\\/g, "/"),
@@ -184,23 +188,20 @@ const updateCandidate = async (req, res) => {
       );
     }
 
-    //Update or create profile
+    //  Update Profile
     const updatedProfile = await candidate.findOneAndUpdate(
-      { user: id },
-      { $set: updateData,
-        ...(newExperience.length>0 && {$push:{experience:{$each:newExperience}}})
-       },
+      { user: userId },
+      { $set: updateData },
       { new: true, upsert: true },
     );
 
     return res.status(200).json({
       success: true,
-      message: "Profile updated successfully",
+      message: "Profile saved successfully",
       data: updatedProfile,
     });
   } catch (error) {
     console.error(error);
-
     return res.status(500).json({
       success: false,
       message: "Server error",

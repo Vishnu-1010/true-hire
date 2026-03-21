@@ -15,9 +15,10 @@ const uploadToImageKit = async (filePath, folder = "/uploads/temp") => {
       folder,
       useUniqueFileName: true,
     });
-
+    await fs.unlink(filePath);
     return result.url;
   } catch (err) {
+    if(filePath)    await fs.unlink(filePath);
     console.error("ImageKit upload failed:", err.message);
     throw err;
   } finally {
