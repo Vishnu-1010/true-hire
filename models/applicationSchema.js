@@ -5,15 +5,13 @@ const applicationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
     job: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Job",
       required: true,
-    },
-    recruiter: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Recruiter",
+      index: true,
     },
     resume: {
       type: String,
@@ -26,8 +24,16 @@ const applicationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Applied", "In-review", "shortlisted", "rejected", "hired"],
-      default: "Applied",
+      enum: ["applied", "In-review", "shortlisted", "rejected", "hired"],
+      default: "applied",
+    },
+    gitHubLink: {
+      type: String,
+      trim: true,
+    },
+    portfolioLink: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true },
@@ -35,4 +41,4 @@ const applicationSchema = new mongoose.Schema(
 
 applicationSchema.index({ applicant: 1, job: 1 }, { unique: true });
 
-module.exports = mongoose.model("Application",applicationSchema);
+export default mongoose.model("Application",applicationSchema);
