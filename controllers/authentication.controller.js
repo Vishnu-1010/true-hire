@@ -77,7 +77,12 @@ const userLogin = async (req, res) => {
         message: "Invalid credentials",
       });
     }
-
+if (userEmail.status === "banned") {
+  return res.status(403).json({
+    success: false,
+    message: "Your account is banned",
+  });
+}
     const token = jwt.sign(
       {
         id: userEmail._id,
