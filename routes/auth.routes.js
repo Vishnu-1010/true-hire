@@ -6,15 +6,15 @@ import { userSignup, userLogin,logout} from "../controllers/authentication.contr
 
 //middlewares
 import { validateSignUp } from "../middleware/auth/signupValidation.js";
+import { loginLimter } from "../middleware/auth/rateLimiter.js";
 
 import { LoginValidation } from "../middleware/auth/LoginValidation.js";
 
 const router = express.Router();
-const app = express();
 
 
 //login page
-router.post("/login", LoginValidation, userLogin);
+router.post("/login", LoginValidation, loginLimter, userLogin);
 //signup page
 router.post("/signup", validateSignUp, userSignup);
 
