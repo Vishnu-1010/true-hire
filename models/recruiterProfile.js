@@ -6,10 +6,12 @@ const recruiterProfile = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      unique: true,
     },
     companyName: {
       type: String,
       required: true,
+      trim: true,
     },
     companyWebsite: {
       type: String,
@@ -24,7 +26,12 @@ const recruiterProfile = mongoose.Schema(
       trim: true,
     },
     recruiterProfileImage: String,
-    companyLogo: String
+    companyLogo: String,
+    status: {
+      type: String,
+      enum: ["active", "banned"],
+      default: "active",
+    },
   },
   { timestamps: true },
 );
