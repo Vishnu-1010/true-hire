@@ -13,17 +13,23 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       required: true,
-      index:true
+      index: true,
+      match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
     password: {
       type: String,
-      required: true,   
+      required: true,
     },
     role: {
       type: String,
       required: true,
       enum: ["candidate", "recruiter"],
       default: "candidate",
+    },
+    status: {
+      type: String,
+      enum: ["active", "banned"],
+      default: "active",
     },
   },
   { timestamps: true },
