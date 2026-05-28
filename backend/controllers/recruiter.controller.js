@@ -32,7 +32,7 @@ try {
     : null;
 
   const companyLogoUrl = companyLogos?.[0]
-    ? await uploadToCloudinary(
+    ? await uploadToImageKit(
         companyLogos[0].path,
         "jobportal/recruiter/companyLogo",
       )
@@ -122,10 +122,10 @@ const updateRecruiter = async (req, res) => {
           );
     }
     if (companyLogos?.[0]) {
-      updateData.companyLogo = await uploadToCloudinary(
-            companyLogos[0].path,
-            "jobportal/recruiter/companyLogo",
-          )
+      updateData.companyLogo = await uploadToImageKit(
+        companyLogos[0].path,
+        "jobportal/recruiter/companyLogo",
+      );
         }
 
     // Update recruiter profile
