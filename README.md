@@ -106,4 +106,5 @@ frontend/
     pages/
     context/
     utils/
+    store/
 ```
